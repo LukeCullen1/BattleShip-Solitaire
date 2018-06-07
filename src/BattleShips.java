@@ -19,7 +19,14 @@ public class BattleShips {
             populateLists(file, attempts, ships, Xhits, Yhits);
             int gameSize = Xhits.size();
             int[][] gameBoard = new int[Xhits.size()][Xhits.size()];
-            initialPopulation(ships, gameBoard, Xhits, Yhits);
+            int errors = 0;
+            initialPopulation(ships, gameBoard, Xhits, Yhits, ships);
+            errors = countErrors(gameBoard, Xhits, Yhits);
+            for(int i = 0; i < 12; i++) {
+                gameBoard = improveGuess(gameBoard, ships, Xhits, Yhits, errors);
+                errors = countErrors(gameBoard, Xhits, Yhits);
+            }
+
 
 
         } catch (Exception e) {
@@ -59,53 +66,107 @@ public class BattleShips {
         }
     }
 
-    public static void improveGuess(int [][] gb, ArrayList ships)
+    public static int[][] improveGuess(int [][] gb, ArrayList ships, ArrayList xh, ArrayList yh, int errorsToImprove)
     {
-        Random rand = new Random();
-        int x = rand.nextInt(gb.length);
-        int y = rand.nextInt(gb.length);
-        while(gb[x][y]!=1)
-        {
-            x = rand.nextInt(gb.length);
-            y = rand.nextInt(gb.length);
+        boolean improved = false;
+        int[][] gbCopy = gb;
+        while(improved != true) {
+            gb=gbCopy;
+            Random rand = new Random();
+            int x = rand.nextInt(gb.length);
+            int y = rand.nextInt(gb.length);
+            while (gb[x][y] != 1) {
+                x = rand.nextInt(gb.length);
+                y = rand.nextInt(gb.length);
+            }
+            int n = 0;
+            int length = 0;
+            while (gb[x - n][y] != 0) {
+                gb[x - n][y] = 0;
+                n++;
+                length++;
+                if(x - n < 0)
+                {
+                    break;
+                }
+            }
+            n = 0;
+            while (gb[x + n][y] != 0) {
+                gb[x + n][y] = 0;
+                n++;
+                length++;
+                if(x+n >= gb.length)
+                {
+                    break;
+                }
+            }
+            n = 1;
+            if(y-n >= 0) {
+                while (gb[x][y - n] != 0) {
+                    gb[x][y - n] = 0;
+                    n++;
+                    length++;
+                    if (y - n < 0) {
+                        break;
+                    }
+                }
+            }
+            n = 1;
+            if(y+n < gb.length) {
+                while (gb[x][y + n] != 0) {
+                    gb[x][y + n] = 0;
+                    n++;
+                    length++;
+                    if (y + n >= gb.length) {
+                        break;
+                    }
+                }
+            }
+            ArrayList<Integer> excludedY = new ArrayList<>();
+            ArrayList<Integer> excludedX = new ArrayList<>();
+            String[] directionValues = new String[2];
+            directionValues[0] = "UP/DOWN";
+            directionValues[1] = "ACROSS";
+            for (int i = 0; i < xh.size(); i++) {
+                if (xh.get(i).equals(0)) {
+                    excludedX.add(i);
+                }
+                if (yh.get(i).equals(0)) {
+                    excludedY.add(i);
+                }
+            }
+            Boolean shipPlaced = false;
+            while (shipPlaced != true) {
+                int xVal = rand.nextInt(gb.length);
+                int yVal = rand.nextInt(gb.length);
+                String direction = directionValues[rand.nextInt(2)];
+                if (placementOK(xVal, yVal, length, direction, gb, excludedX, excludedY)) {
+                    if (direction.compareTo("UP/DOWN") == 0) {
+                        for (int j = yVal; j < yVal + length; j++) {
+                            gb[xVal][j] = 1;
+                        }
+                    } else {
+                        for (int j = xVal; j < xVal + length; j++) {
+                            gb[j][yVal] = 1;
+                        }
+                    }
+                    shipPlaced = true;
+                }
+            }
+            if(countErrors(gb, xh, yh) < errorsToImprove)
+            {
+                improved = true;
+            }
         }
-        int n = 0;
-        int length = 0;
-        while(gb[x-n][y] != 0)
-        {
-            gb[x-n][y] = 0;
-            n++;
-            length++;
-        }
-        n=0;
-        while(gb[x+n][y] != 0)
-        {
-            gb[x+n][y] = 0;
-            n++;
-            length++;
-        }
-        n=1;
-        while(gb[x][y-n] != 0)
-        {
-            gb[x][y-n] = 0;
-            n++;
-            length++;
-        }
-        n=1;
-        while(gb[x][y+n] != 0)
-        {
-            gb[x][y+n] = 0;
-            n++;
-            length++;
-        }
-
-
-
+        printGame(gb);
+        System.out.println("IMPROVED ERROR COUNT: " + countErrors(gb, xh, yh));
+        return gb;
 
     }
 
-    public static void initialPopulation(ArrayList s, int[][] gb, ArrayList xh, ArrayList yh)
+    public static void initialPopulation(ArrayList s, int[][] gb, ArrayList xh, ArrayList yh, ArrayList sh)
     {
+
         ArrayList<Integer> excludedY = new ArrayList<>();
         ArrayList<Integer> excludedX = new ArrayList<>();
         String[] directionValues = new String[2];
@@ -142,11 +203,11 @@ public class BattleShips {
                     }
                     shipPlaced = true;
                 }
+
             }
         }
         printGame(gb);
         System.out.println("ERROR COUNT = " + countErrors(gb, xh, yh));
-
 
     }
 
