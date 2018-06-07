@@ -1,3 +1,6 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+
 public class BattleShips {
     public static void main(String[] args)
     {
@@ -11,6 +14,17 @@ public class BattleShips {
             String file = args[0];
             int attempts = Integer.parseInt(args[1]);
             System.out.println("File: " + file + " attempts: " + attempts);
+
+            FileReader fr = new FileReader(file);
+            BufferedReader br = new BufferedReader(fr);
+
+            String line;
+
+            while((line = br.readLine())!= null)
+            {
+                System.out.println(line);
+            }
+
         }
         catch(Exception e)
         {
